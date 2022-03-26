@@ -16,16 +16,17 @@ export class AuthService {
     ) {
     }
 
-
     async login(dto: AuthDto) {
         const user = await this.validateUser(dto)
 
         const tokens = await this.issueTokenPair(String(user._id))
+
         return {
             user: this.returnUserFields(user),
             ...tokens
         }
     }
+
 
     async getNewTokens({refreshToken}: RefreshTokenDto) {
         if (!refreshToken) throw new UnauthorizedException('Please sing in!')
@@ -50,12 +51,15 @@ export class AuthService {
         }
 
         const salt = await genSalt(10);
+
         const newUser = new this.UserModel({
             email: dto.email,
             password: await hash(dto.password, salt)
         });
 
         const tokens = await this.issueTokenPair(String(newUser._id))
+
+        await newUser.save();
         return {
             user: this.returnUserFields(newUser),
             ...tokens
@@ -75,25 +79,23 @@ export class AuthService {
     async issueTokenPair(userId: string) {
         const data = {_id: userId}
 
-        const refreshToken = await this.jwtService.signAsync(data,
-            {
-                expiresIn: '15d'
-            })
+        const refreshToken = await this.jwtService.signAsync(data, {
+            expiresIn: '15d'
+        })
 
-        const accessToken = await this.jwtService.signAsync(data,
-            {
-                expiresIn: '1h'
-            })
+        const accessToken = await this.jwtService.signAsync(data, {
+            expiresIn: '1h'
+        })
+
         return {refreshToken, accessToken}
     }
 
-    returnUserFields(user: UserModel) {
-        return {
-            _id: user._id,
+    returnUserFields(user:UserModel){
+        return{
+            _id:user._id,
             email: user.email,
-            isAdmin: user.isAdmin
+            isAdmin:user.isAdmin
         }
+
     }
 }
-
-
