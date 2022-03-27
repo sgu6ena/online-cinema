@@ -7,7 +7,7 @@ import {path} from "app-root-path";
 @Module({
     imports: [
         ServeStaticModule.forRoot({
-            rootPath: `${path}`,
+            rootPath: `${path}/uploads`,
             serveRoot: '/uploads'
         })
     ],
