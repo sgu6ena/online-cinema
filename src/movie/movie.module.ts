@@ -3,8 +3,10 @@ import { MovieController } from './movie.controller';
 
 import {MovieService} from "./movie.service";
 import {TypegooseModule} from "nestjs-typegoose";
-import { MovieModel } from './movie.model';
+import {MovieModel} from "./movie.model";
 
+
+// @ts-ignore
 @Module({
   imports: [
     TypegooseModule.forFeature([
@@ -19,4 +21,4 @@ import { MovieModel } from './movie.model';
   providers: [MovieService],
   controllers: [MovieController]
 })
-export class MovieModule {}
+export class MovieModules {}
