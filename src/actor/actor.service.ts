@@ -1,7 +1,7 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
 import {InjectModel} from "nestjs-typegoose";
 import {ModelType} from "@typegoose/typegoose/lib/types";
-import { ActorModel } from './actor.model';
+import {ActorModel} from './actor.model';
 import {ActorDto} from "./actor.dto";
 
 
@@ -31,11 +31,26 @@ export class ActorService {
                 ]
             }
 
-        return this.ActorModel.find(options).select(' -updatedAt -__v').sort({
-            createdAt: "desc"
-        }).exec()
+        return this.ActorModel
+            .aggregate()
+            .match(options)
+            .lookup({
+                from: "Movie",
+                foreignField: "actors",
+                localField: "_id",
+                as: "movies"
+            }).addFields({
+                countMovies: {
+                    $size: "$movies"
+                }
+            }).project({
+                __v: 0,
+                updateAt: 0,
+                movies: 0
+            }).sort({
+                createdAt: "desc"
+            }).exec()
     }
-//TODO: aggregation
 
 
     /* Admin place*/
@@ -58,7 +73,7 @@ export class ActorService {
     }
 
     async update(_id: string, dto: ActorDto) {
-        const updateActor = await this.ActorModel.findByIdAndUpdate(_id, dto, {new: true }).exec()
+        const updateActor = await this.ActorModel.findByIdAndUpdate(_id, dto, {new: true}).exec()
         if (!updateActor) throw new NotFoundException('Actor not found!')
         return updateActor
     }

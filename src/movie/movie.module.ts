@@ -1,24 +1,26 @@
-import { Module } from '@nestjs/common';
-import { MovieController } from './movie.controller';
+import { Module } from '@nestjs/common'
+import { TypegooseModule } from 'nestjs-typegoose'
 
-import {MovieService} from "./movie.service";
-import {TypegooseModule} from "nestjs-typegoose";
-import {MovieModel} from "./movie.model";
+import { UserModule } from 'src/user/user.module'
+import { MovieController } from './movie.controller'
+import { MovieModel } from './movie.model'
+import { MovieService } from './movie.service'
 
-
-// @ts-ignore
 @Module({
-  imports: [
-    TypegooseModule.forFeature([
-      {
-        typegooseClass: MovieModel,
-        schemaOptions: {
-          collection: 'Movie'
-        },
-      },
-    ]),
-  ],
-  providers: [MovieService],
-  controllers: [MovieController]
+    controllers: [MovieController],
+    imports: [
+        TypegooseModule.forFeature([
+            {
+                typegooseClass: MovieModel,
+                schemaOptions: {
+                    collection: 'Movie',
+                },
+            },
+        ]),
+
+        UserModule,
+    ],
+    providers: [MovieService],
+    exports: [MovieService],
 })
-export class MovieModules {}
+export class MovieModule {}

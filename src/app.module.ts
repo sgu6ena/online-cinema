@@ -9,8 +9,8 @@ import {UserModule} from './user/user.module';
 import {GenreModule} from './genre/genre.module';
 import {FileModule} from './file/file.module';
 import {ActorModule} from './actor/actor.module';
-import {MovieService} from './movie/movie.service';
 import {MovieModule} from './movie/movie.module';
+import { RatingModule } from './rating/rating.module';
 
 @Module({
     imports: [
@@ -25,10 +25,11 @@ import {MovieModule} from './movie/movie.module';
         GenreModule,
         FileModule,
         ActorModule,
-        MovieModule
+        MovieModule,
+        RatingModule
     ],
     controllers: [AppController],
-    providers: [AppService, MovieService],
+    providers: [AppService],
 })
 export class AppModule {
 }

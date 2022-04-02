@@ -11,13 +11,13 @@ import {
     UsePipes,
     ValidationPipe
 } from '@nestjs/common';
-import {MovieService} from "../movie/movie.service";
+import {MovieService} from "./movie.service";
 import {Auth} from "../auth/decorators/auth.decorator";
 import {IdValidationPipe} from "../pipes/id.validation.pipe";
 import {CreateMovieDto} from "./create-movie.dto";
 import {Types} from "mongoose";
 
-@Controller('movie')
+@Controller('movies')
 export class MovieController {
 
     constructor(private readonly movieService: MovieService) {
@@ -28,12 +28,13 @@ export class MovieController {
         return this.movieService.bySlug(slug)
     }
 
-    @Get('/by-actor/:actorId')
+    @Get('by-actor/:actorId')
     async byActor(@Param("actorId", IdValidationPipe)  actorId: Types.ObjectId) {
         return this.movieService.byActor(actorId)
     }
 
-    @Post('/by-genres')
+    @UsePipes(new ValidationPipe())
+    @Post('by-genres')
     @HttpCode(200)
     async byGenres(@Body('genreIds') genreIds:Types.ObjectId[]) {
         return this.movieService.byGenres(genreIds)
@@ -47,6 +48,14 @@ export class MovieController {
     @Get('most-popular')
     async getMostPopular() {
         return this.movieService.getMostPopular()
+    }
+
+    @Put('update-count-opened')
+    @HttpCode(200)
+    async updateCountOpened(
+        @Body('slug') slug:string
+    ) {
+        return this.movieService.updateCountOpened(slug)
     }
 
     @Get(':id')

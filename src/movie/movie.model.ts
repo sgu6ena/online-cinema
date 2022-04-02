@@ -1,7 +1,8 @@
 import {Base, TimeStamps} from "@typegoose/typegoose/lib/defaultClasses";
 import {prop, Ref} from "@typegoose/typegoose";
-import {ActorModel} from "../actor/actor.model";
+
 import {GenreModel} from "../genre/genre.model";
+import {ActorModel} from "../actor/actor.model";
 
 export interface MovieModel extends Base {
 }

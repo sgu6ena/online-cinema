@@ -5,6 +5,7 @@ import {ModelType} from "@typegoose/typegoose/lib/types";
 
 import {genSalt, hash} from "bcryptjs";
 import {UpdateUserDto} from "./dto/update-user.dto";
+import {Types} from "mongoose";
 
 
 @Injectable()
@@ -63,5 +64,30 @@ export class UserService {
 
     async delete(id: string) {
         return this.UserModel.findByIdAndDelete(id).exec()
+    }
+
+    async toggleFavorite(movieId: Types.ObjectId, user: UserModel) {
+        const {_id, favorites} = user
+
+        await this.UserModel.findByIdAndUpdate(_id, {
+            favorites: favorites.includes(movieId)
+                ? favorites.filter(id => String(id) !== String(movieId))
+                : [...favorites, movieId]
+        })
+    }
+
+    async getFavoriteMovies(_id: Types.ObjectId) {
+        return this.UserModel
+            .findById(_id, 'favorites')
+            .populate({
+                path: 'favorites',
+                populate: {
+                    path: 'genres',
+                },
+            })
+            .exec()
+            .then((data) => {
+                return data.favorites
+            })
     }
 }
