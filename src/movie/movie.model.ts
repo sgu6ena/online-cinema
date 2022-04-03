@@ -1,59 +1,53 @@
-import {Base, TimeStamps} from "@typegoose/typegoose/lib/defaultClasses";
-import {prop, Ref} from "@typegoose/typegoose";
-
-import {GenreModel} from "../genre/genre.model";
-import {ActorModel} from "../actor/actor.model";
+import {prop, Ref} from '@typegoose/typegoose'
+import {Base, TimeStamps} from '@typegoose/typegoose/lib/defaultClasses'
+import {ActorModel} from 'src/actor/actor.model'
+import {GenreModel} from 'src/genre/genre.model'
 
 export interface MovieModel extends Base {
 }
 
-export class Parameters {
+export class Parameter {
     @prop()
-    year: number;
+    year: number
 
     @prop()
-    duration: number;
+    duration: number
 
     @prop()
-    country: string;
-
+    country: string
 }
 
 export class MovieModel extends TimeStamps {
+    @prop()
+    poster: string
 
     @prop()
-    poster: string;
-
-    @prop()
-    bigPoster: string;
-
-    @prop()
-    title: string;
-
-    @prop()
-    description: string;
+    bigPoster: string
 
     @prop({unique: true})
-    slug: string;
+    title: string
 
     @prop()
-    parameters?: Parameters;
+    parameters: Parameter
 
     @prop({default: 4.0})
     rating?: number
 
+    @prop({ref: () => GenreModel})
+    genres: Ref<GenreModel>[]
+
     @prop({default: 0})
     countOpened?: number
 
-    @prop()
-    videoUrl: string;
+    @prop({unique: true})
+    videoUrl: string
 
-    @prop(() => GenreModel)
-    genres: Ref<GenreModel>[];
+    @prop({ref: () => ActorModel})
+    actors: Ref<ActorModel>[]
 
-    @prop(() => ActorModel)
-    actors: Ref<ActorModel>[];
+    @prop({unique: true})
+    slug: string
 
     @prop({default: false})
-    isSendTelegram?: boolean;
+    isSendTelegram?: boolean
 }

@@ -1,90 +1,68 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
-import {InjectModel} from "nestjs-typegoose";
-import {ModelType} from "@typegoose/typegoose/lib/types";
-import {CreateMovieDto} from "./create-movie.dto";
-import {MovieModel} from './movie.model';
-import {Types} from "mongoose";
+import {Injectable} from '@nestjs/common'
+import {ModelType, DocumentType} from '@typegoose/typegoose/lib/types'
+import {Types} from 'mongoose'
+import {InjectModel} from 'nestjs-typegoose'
+// import { TelegramService } from 'src/telegram/telegram.service'
 
+import {CreateMovieDto} from './dto/create-movie.dto'
+import {MovieModel} from './movie.model'
 
 @Injectable()
 export class MovieService {
-    constructor(@InjectModel(MovieModel) private readonly movieModel: ModelType<MovieModel>) {
+    constructor(
+        @InjectModel(MovieModel) private readonly movieModel: ModelType<MovieModel>,
+        // private readonly telegramService: TelegramService
+    ) {
     }
 
-    async getAll(searchTerm?: string) {
+    async getAll(searchTerm?: string): Promise<DocumentType<MovieModel>[]> {
         let options = {}
 
-        if (searchTerm)
+        if (searchTerm) {
             options = {
                 $or: [
                     {
-                        title: new RegExp(searchTerm, 'i')
+                        title: new RegExp(searchTerm, 'i'),
                     },
-                ]
+                ],
             }
+        }
 
         return this.movieModel
             .find(options)
-            .select(' -updatedAt -__v')
-            .sort({createdAt: "desc"})
-            .populate("actors genres")
+            .select('-updatedAt -__v')
+            .sort({createdAt: 'desc'})
+            .populate('genres actors')
             .exec()
     }
 
-    async bySlug(slug: string) {
-        const movie = await this.movieModel.findOne({slug}).populate("actors genres").exec()
-        if (!movie) throw new NotFoundException('Movie not found!')
-        return movie
+    async bySlug(slug: string): Promise<DocumentType<MovieModel>> {
+        return this.movieModel.findOne({slug}).populate('genres actors').exec()
     }
 
-    async byActor(actorId: Types.ObjectId) {
-        const movies = await this.movieModel.find({actors: actorId}).exec()
-        if (!movies) throw new NotFoundException('Movie not found!')
-        return movies
+    async byActor(actorId: Types.ObjectId): Promise<DocumentType<MovieModel>[]> {
+        return this.movieModel.find({actors: actorId}).exec()
     }
 
-    async byGenres(genreIds: Types.ObjectId[]) {
-        const movies = await this.movieModel.find({genres: {$in: genreIds}}).exec()
-        if (!movies) throw new NotFoundException('Movie not found!')
-        return movies
+    async byGenres(
+        genreIds: Types.ObjectId[]
+    ): Promise<DocumentType<MovieModel>[]> {
+        return this.movieModel.find({genres: {$in: genreIds}}).exec()
     }
 
     async updateCountOpened(slug: string) {
-        const updateMovie = await this.movieModel.findOneAndUpdate(
-            {slug},
-            {
-                $inc: {countOpened: 1}
-            },
-            {
-                new: true
-            }
-        ).exec()
-        if (!updateMovie) throw new NotFoundException('Movie not found!')
-        return updateMovie
+        return this.movieModel
+            .findOneAndUpdate({slug}, {$inc: {countOpened: 1}})
+            .exec()
     }
 
-    async updateRating(id: Types.ObjectId, newRating: number) {
+    /* Admin area */
 
-        return this.movieModel.findByIdAndUpdate(id, {
-            rating: newRating
-        }, {
-            new: true
-        }).exec()
+    async byId(id: string): Promise<DocumentType<MovieModel>> {
+        return this.movieModel.findById(id).exec()
     }
 
-    async getMostPopular() {
-        return this.movieModel.find({countOpened: {$gt: 0}}).populate('genres').exec()
-    }
-
-    /* Admin place*/
-    async byId(_id: string) {
-        const movie = await this.movieModel.findById(_id)
-
-        if (!movie) throw new NotFoundException('Movie not found!')
-        return movie
-    }
-
-    async create() {
+    async create(): Promise<Types.ObjectId> {
         const defaultValue: CreateMovieDto = {
             bigPoster: '',
             actors: [],
@@ -93,25 +71,60 @@ export class MovieService {
             poster: '',
             title: '',
             videoUrl: '',
-            slug: ''
+            slug: '',
         }
         const movie = await this.movieModel.create(defaultValue)
         return movie._id
     }
 
-    async update(_id: string, dto: CreateMovieDto) {
-        //TODO:telegram notification
+    async update(
+        id: string,
+        dto: CreateMovieDto
+    ): Promise<DocumentType<MovieModel> | null> {
+        // if (!dto.isSendTelegram) {
+        // 	await this.sendNotifications(dto)
+        // 	dto.isSendTelegram = true
+        // }
 
-        const updateMovie = await this.movieModel.findByIdAndUpdate(_id, dto, {new: true}).exec()
-        if (!updateMovie) throw new NotFoundException('Movie not found!')
-        return updateMovie
+        return this.movieModel.findByIdAndUpdate(id, dto, {new: true}).exec()
     }
 
-    async delete(id: string) {
-        const deleteMovie = await this.movieModel.findByIdAndDelete(id).exec()
-        if (!deleteMovie) throw new NotFoundException('Movie not found!')
-        return deleteMovie
+    async delete(id: string): Promise<DocumentType<MovieModel> | null> {
+        return this.movieModel.findByIdAndDelete(id).exec()
     }
 
+    async getMostPopular(): Promise<DocumentType<MovieModel>[]> {
+        return this.movieModel
+            .find({countOpened: {$gt: 0}})
+            .sort({countOpened: -1})
+            .populate('genres')
+            .exec()
+    }
 
+    async updateRating(id: string, newRating: number) {
+        return this.movieModel
+            .findByIdAndUpdate(id, {rating: newRating}, {new: true})
+            .exec()
+    }
+
+    // /* Utilites */
+    // async sendNotifications(dto: CreateMovieDto) {
+    // 	if (process.env.NODE_ENV !== 'development')
+    // 		await this.telegramService.sendPhoto(dto.poster)
+    //
+    // 	const msg = `<b>${dto.title}</b>\n\n` + `${dto.description}\n\n`
+    //
+    // 	await this.telegramService.sendMessage(msg, {
+    // 		reply_markup: {
+    // 			inline_keyboard: [
+    // 				[
+    // 					{
+    // 						url: 'https://okko.tv/movie/free-guy',
+    // 						text: '🍿 Go to watch',
+    // 					},
+    // 				],
+    // 			],
+    // 		},
+    // 	})
+    // }
 }
